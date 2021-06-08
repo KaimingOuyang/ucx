@@ -19,6 +19,7 @@
 #include <ucs/datastruct/queue.h>
 
 
+extern int ucx_owner_pid;
 static UCS_F_ALWAYS_INLINE ucs_status_ptr_t
 ucp_tag_recv_common(ucp_worker_h worker, void *buffer, size_t count,
                     uintptr_t datatype, ucp_tag_t tag, ucp_tag_t tag_mask,
@@ -97,6 +98,14 @@ ucp_tag_recv_common(ucp_worker_h worker, void *buffer, size_t count,
                                                      req->recv.length);
     req->recv.tag.tag       = tag;
     req->recv.tag.tag_mask  = tag_mask;
+
+    int mypid = getpid();
+    if(mypid != ucx_owner_pid) {
+        req->pre_mem_h = (ucp_mem_h) buffer;
+    } else {
+        req->pre_mem_h = 0;
+    }
+
     if (param->op_attr_mask & UCP_OP_ATTR_FIELD_CALLBACK) {
         req->recv.tag.cb    = param->cb.recv;
         req->user_data      = param->user_data;

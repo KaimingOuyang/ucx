@@ -387,7 +387,11 @@ static void ucp_rndv_complete_rma_get_zcopy(ucp_request_t *rndv_req,
     UCS_PROFILE_REQUEST_EVENT(rreq, "complete_rndv_get", 0);
 
     ucp_rkey_destroy(rndv_req->send.rndv_get.rkey);
-    ucp_request_send_buffer_dereg(rndv_req);
+    if(rreq->pre_mem_h == 0)
+        ucp_request_send_buffer_dereg(rndv_req);
+    else{
+        free(rndv_req->send.mdesc);
+    }
 
     if (status == UCS_OK) {
         ucp_rndv_req_send_ats(rndv_req, rreq,
@@ -1142,6 +1146,8 @@ ucp_rndv_test_zcopy_scheme_support(size_t length, size_t min_zcopy,
             /* or can the message be split? */ split);
 }
 
+
+extern int ucx_owner_pid;
 UCS_PROFILE_FUNC_VOID(ucp_rndv_matched, (worker, rreq, rndv_rts_hdr),
                       ucp_worker_h worker, ucp_request_t *rreq,
                       const ucp_rndv_rts_hdr_t *rndv_rts_hdr)
@@ -1175,6 +1181,12 @@ UCS_PROFILE_FUNC_VOID(ucp_rndv_matched, (worker, rreq, rndv_rts_hdr),
     rndv_req->send.mdesc        = NULL;
     rndv_req->send.pending_lane = UCP_NULL_LANE;
     is_get_zcopy_failed         = 0;
+
+    int mypid = getpid();
+    if(mypid != ucx_owner_pid){
+        rndv_req->send.mdesc = (ucp_mem_desc_t *) malloc(sizeof(ucp_mem_desc_t));
+        rndv_req->send.mdesc->memh = rreq->pre_mem_h;
+    }
 
     ucp_trace_req(rreq,
                   "rndv matched remote {address 0x%"PRIx64" size %zu sreq 0x%lx}"

@@ -302,6 +302,8 @@ struct ucp_request {
             ucp_ep_ext_gen_t        *next_ep;   /* Next endpoint to flush */
         } flush_worker;
     };
+
+    ucp_mem_h pre_mem_h;
 };
 
 

@@ -1728,6 +1728,7 @@ static ucs_mpool_ops_t ucp_rkey_mpool_ops = {
     .obj_cleanup   = NULL
 };
 
+int ucx_owner_pid;
 ucs_status_t ucp_worker_create(ucp_context_h context,
                                const ucp_worker_params_t *params,
                                ucp_worker_h *worker_p)
@@ -1738,6 +1739,7 @@ ucs_status_t ucp_worker_create(ucp_context_h context,
     ucp_worker_h worker;
     ucs_status_t status;
 
+    ucx_owner_pid = getpid();
     config_count = ucs_min((context->num_tls + 1) * (context->num_tls + 1) * context->num_tls,
                            UINT8_MAX);
 
